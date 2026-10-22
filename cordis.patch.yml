@@ -1,0 +1,5 @@
+# dsh-session-overview —— bundle 挂载声明
+# 只插入自己这一个条目；不改动任何既有 id 的配置。
+- insert:
+    - id: dsh-session-overview
+      name: dsh-session-overview

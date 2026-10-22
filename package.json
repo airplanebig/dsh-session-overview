@@ -1,0 +1,46 @@
+{
+  "name": "dsh-session-overview",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 插件：跨工作区会话总览、自动匹配目标会话、确认后投递（总窗口 Phase 1–3）",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "session",
+    "routing"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "slots",
+        "sessions",
+        "workspaces",
+        "uiWorkspace",
+        "locale",
+        "layout"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "test": "node test/selftest.cjs"
+  },
+  "license": "MIT"
+}
