@@ -196,6 +196,15 @@ async function main() {
   checks.push(['weak query picks nothing', mod.__test.pickBest(mod.__test.rankCandidates('嗯', rows, [])) === null]);
   checks.push(['clear winner is picked', mod.__test.pickBest(contentRanked).id === 'session-b']);
 
+  const labels = mod.__test.buildWorkspaceLabels([
+    { workspaceId: 'a', cwd: 'D:/A/记忆', sessionIds: ['s1'] },
+    { workspaceId: 'b', cwd: 'D:/B/记忆', sessionIds: ['s2'] },
+    { workspaceId: 'c', cwd: 'D:/C/唯一', sessionIds: ['s3'] },
+  ]);
+  checks.push(['same-named workspaces get qualified',
+    labels.get('s1') !== labels.get('s2') && labels.get('s1').includes('记忆') && labels.get('s1').includes('A')]);
+  checks.push(['unique workspace keeps a short label', labels.get('s3') === '唯一']);
+
   // ---- page basics ----
   let tree = render();
   checks.push(['page lists every session', ['做一个 C# 控制台项目', 'Unity 穿墙修复', '大肥鱼插画'].every((s) => asText(tree).includes(s))]);
@@ -222,7 +231,8 @@ async function main() {
   checks.push(['send button uses the themed fill/foreground pair',
     String(sendButton().props.style.background).includes('button-primary-fill')
     && String(sendButton().props.style.color).includes('label-primary-foreground')]);
-  checks.push(['ask-before-send defaults to on', checkboxes().length === 1 && checkboxes()[0].props.checked === true]);
+  checks.push(['ask-before-send defaults to on', checkboxes().length === 2 && checkboxes()[0].props.checked === true]);
+  checks.push(['show-workspace defaults to on', checkboxes()[1].props.checked === true]);
 
   // ---- ask flow: first Enter only proposes a destination ----
   type('帮我看下这个构建错误');
@@ -275,8 +285,19 @@ async function main() {
   checks.push(['recent row lists the newest sessions', recentChips.length === 4]);
   checks.push(['recent chips are ordered by recency',
     recentChips.map((n) => n.props['data-recent']).join(',') === 'session-a,session-c,session-d,session-b']);
-  checks.push(['untitled session shows its workspace',
-    flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('未命名会话) · 杀')]);
+  checks.push(['untitled chip carries a workspace tag',
+    flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')]);
+
+  // the workspace tag is optional
+  checkboxes()[1].props.onChange({ target: { checked: false } });
+  tree = render();
+  checks.push(['hiding workspaces removes the tag',
+    !flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')]);
+  checks.push(['workspace choice is persisted', storage.get('dsh-session-overview:workspace') === '0']);
+  checkboxes()[1].props.onChange({ target: { checked: true } });
+  tree = render();
+  checks.push(['turning it back on restores the tag',
+    flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')]);
   recentChips.find((n) => n.props['data-recent'] === 'session-b').props.onClick();
   tree = render();
   checks.push(['recent chip pins that session', flatText(tree).includes('已锁定 · Unity 穿墙修复')]);

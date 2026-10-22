@@ -9,7 +9,7 @@
 ## 五分钟上手
 
 ```bash
-node test/selftest.cjs     # 51 项离线校验，不依赖 DSH / 浏览器
+node test/selftest.cjs     # 57 项离线校验，不依赖 DSH / 浏览器
 ```
 
 改完代码后：插件在 profile 里是 `link:` 依赖，**重启 DSH 即可**，不需要重装、不需要 pnpm install。
@@ -110,15 +110,17 @@ state-warn-primary / state-error-primary
 
 | 区块 | 职责 |
 |---|---|
-| `PANEL_ID` / `NS` / `LAYOUT_KEY` / `ASK_KEY` | 常量；改 id 要同步 package.json 与 cordis.patch.yml |
+| `PANEL_ID` / `NS` / `LAYOUT_KEY` / `ASK_KEY` / `WS_KEY` | 常量；改 id 要同步 package.json 与 cordis.patch.yml |
 | `T` | 设计令牌表（含 fallback） |
 | `DICT` | 中英文字典 |
 | `useStore` | uSES 订阅 |
-| `baseName` / `ago` / `clampInt` | 小工具 |
+| `baseName` / `parentName` / `ago` / `clampInt` | 小工具 |
+| `buildWorkspaceLabels` | 会话 id → 工作区标签；同名工作区用父目录区分（`A/记忆`、`B/记忆`） |
 | `normalize` / `bigrams` / `overlapScore` | 中文友好的二元组匹配 |
 | `rankCandidates` / `pickBest` | 打分与阈值（0.35 / 0.05） |
 | `reasonText` | 把 reason 翻成人话 |
-| `readLayout` / `saveLayout` / `readAsk` / `saveAsk` | 偏好持久化 |
+| `readLayout` / `saveLayout` / `readAsk` / `saveAsk` / `readShowWorkspace` / `saveShowWorkspace` | 偏好持久化 |
+| `labelParts` | 把标签拆成 `{ workspace, title }` 两段，避免拼成一长串 |
 | `OverviewIcon` | 侧边栏图标（两个实心方块，18px 可读） |
 | `Segmented` | 自绘分段控件（替代原生 select） |
 | `WorkspaceCard` | 工作区面板 + 会话格子 |
@@ -128,7 +130,7 @@ state-warn-primary / state-error-primary
 页面状态（hook 顺序即持久化键，改动时小心）：
 
 ```
-layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, pending
+layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, showWorkspace, pending
 ```
 
 ## 不变量（改动时必须保持）
@@ -150,6 +152,7 @@ layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, pending
 - 改匹配：只改 `rankCandidates` / `pickBest`，并在 `test/selftest.cjs` 的纯函数区加断言。
 - 改发送：保持 `deliver()` 的单一路径，确认流程不要绕过它。
 - 加持久化：新 key 用 `dsh-session-overview:<name>`，读取要有 try/catch 与默认值。
+- 改标签：workspace 与 title 必须**分开渲染**（`labelParts`），不要拼成一串——拼接会吃掉会话名的可见宽度；同名工作区由 `buildWorkspaceLabels` 用父目录区分。
 - 改注册形状：同步 `package.json` / `cordis.patch.yml` / 测试断言。
 - 改完必须跑 `node test/selftest.cjs`，全部 PASS 再交付。
 
