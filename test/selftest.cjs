@@ -108,7 +108,9 @@ async function main() {
   const searchQueries = [];
   sessions.search = async (query) => {
     searchQueries.push(query);
-    const items = query.includes('鱼') ? [{ id: 'session-c', snippet: '画了一只大肥鱼' }] : [];
+    let items = [];
+    if (query.includes('鱼')) items = [{ id: 'session-c', snippet: '画了一只大肥鱼' }];
+    else if (query === 'Bow' || query === '背包') items = [{ id: 'session-b', snippet: 'Bow 需要从背包取 arrow' }];
     return { ok: true, value: { items, hasMore: false } };
   };
 
@@ -207,6 +209,13 @@ async function main() {
     labels.get('s1') !== labels.get('s2') && labels.get('s1').includes('记忆') && labels.get('s1').includes('A')]);
   checks.push(['unique workspace keeps a short label', labels.get('s3') === '唯一']);
 
+  // keyword extraction: a long sentence is reduced to literal search terms
+  const keywords = mod.__test.extractKeywords('实现Bow类，Bow使用的arrow需要在背包中寻找', 10);
+  checks.push(['keywords keep ascii identifiers', keywords.includes('Bow') && keywords.includes('arrow')]);
+  checks.push(['keywords reach cjk bigrams deep in the sentence', keywords.includes('背包')]);
+  checks.push(['keywords are deduped and capped',
+    new Set(keywords.map((k) => k.toLowerCase())).size === keywords.length && keywords.length <= 10]);
+
   // ---- page basics ----
   let tree = render();
   checks.push(['page lists every session', ['做一个 C# 控制台项目', 'Unity 穿墙修复', '大肥鱼插画'].every((s) => asText(tree).includes(s))]);
@@ -268,7 +277,7 @@ async function main() {
   type('再画一条鱼');
   await wait(350);
   tree = render();
-  checks.push(['search is consulted for the draft', searchQueries.includes('再画一条鱼')]);
+  checks.push(['search is consulted for the draft', searchQueries.some((q) => q.includes('鱼'))]);
   checks.push(['chip shows the suggested session', flatText(tree).includes('推荐 · 大肥鱼插画')]);
   sendButton().props.onClick();
   await wait(0);
@@ -279,6 +288,21 @@ async function main() {
   await wait(0);
   tree = render();
   checks.push(['confirmed send goes to the matched session', prompts[1].id === 'session-c']);
+
+  // ---- a long sentence must still route by its keywords ----
+  type('实现Bow类，Bow使用的arrow需要在背包中寻找');
+  await wait(350);
+  tree = render();
+  checks.push(['long sentence routes to the keyword match', flatText(tree).includes('推荐 · Unity 穿墙修复')]);
+  sendButton().props.onClick();
+  await wait(0);
+  tree = render();
+  checks.push(['confirm searches deeper terms too', searchQueries.includes('背包')]);
+  checks.push(['proposal names the keyword-matched session', flatText(tree).includes('将投递到 Unity 穿墙修复')]);
+  sendButton().props.onClick();
+  await wait(0);
+  tree = render();
+  checks.push(['long sentence sends to the keyword match', prompts.length === 3 && prompts[2].id === 'session-b']);
 
   // ---- manual lock skips the question ----
   tree = render();
@@ -315,7 +339,7 @@ async function main() {
   sendButton().props.onClick();
   await wait(0);
   tree = render();
-  checks.push(['locked target skips the confirmation', prompts[2].id === 'session-b']);
+  checks.push(['locked target skips the confirmation', prompts[3].id === 'session-b']);
 
   // ---- turning the option off restores direct sending ----
   checkboxes()[0].props.onChange({ target: { checked: false } });
@@ -326,7 +350,7 @@ async function main() {
   sendButton().props.onClick();
   await wait(0);
   tree = render();
-  checks.push(['disabled option sends directly', prompts.length === 4 && prompts[3].id === 'session-b']);
+  checks.push(['disabled option sends directly', prompts.length === 5 && prompts[4].id === 'session-b']);
 
   // ---- picker still offers auto + sessions ----
   findAll(tree, (n) => n.type === 'button' && flatText(n.children).includes('▾'))[0].props.onClick();

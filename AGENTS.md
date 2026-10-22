@@ -9,7 +9,7 @@
 ## 五分钟上手
 
 ```bash
-node test/selftest.cjs     # 59 项离线校验，不依赖 DSH / 浏览器
+node test/selftest.cjs     # 66 项离线校验，不依赖 DSH / 浏览器
 ```
 
 改完代码后：插件在 profile 里是 `link:` 依赖，**重启 DSH 即可**，不需要重装、不需要 pnpm install。
@@ -59,6 +59,7 @@ ctx.sessions.using(id, { source }, fn) // 持有引用执行；fn 收到 referen
 reference.binding.session.prompt([{ type: "text", text }], "queue")  // { ok, error }
 ```
 
+- **`search` 是字面短语匹配**：传整句几乎必然返回空。路由前必须先 `extractKeywords()` 抽词（ASCII 标识符 + 中文二元组），再逐词检索并合并命中。
 - `source` 是引用计数归属标签（自由字符串），不影响语义。
 - `mode` 可选 `"queue" | "steer"`；本插件固定 `queue`，避免抢占正在跑的回合。
 - `prompt` 会自动恢复冷会话；失败返回 `{ ok: false, error }`，不抛异常。
@@ -118,6 +119,7 @@ state-warn-primary / state-error-primary
 | `buildWorkspaceLabels` | 会话 id → 工作区标签；同名工作区用父目录区分（`A/记忆`、`B/记忆`） |
 | `workspaceOf` | 取工作区名；注册表里没有该会话时退回它自己的 `cwd` 末段 |
 | `normalize` / `bigrams` / `overlapScore` | 中文友好的二元组匹配 |
+| `extractKeywords` | 把整句拆成可检索的词（ASCII 优先 + 中文二元组）；`LIVE_QUERY_LIMIT=4`、`CONFIRM_QUERY_LIMIT=10` |
 | `rankCandidates` / `pickBest` | 打分与阈值（0.35 / 0.05） |
 | `reasonText` | 把 reason 翻成人话 |
 | `readLayout` / `saveLayout` / `readAsk` / `saveAsk` / `readShowWorkspace` / `saveShowWorkspace` | 偏好持久化 |
@@ -146,6 +148,7 @@ layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, showWorkspace, pen
 8. **不写死颜色**，一律走令牌。
 9. **确认前重新检索**：不要复用 250ms 防抖的旧结果。
 10. **两个 inject 列表同步**：`package.json` 的 `dsh.client.inject` 与 `lib/client.js` 的 `inject`。
+11. **检索必须用关键词**：`sessions.search` 是字面短语匹配，永远不要把用户整句直接丢进去；走 `extractKeywords()` 后逐词检索、合并命中。
 
 ## 改功能的检查清单
 
@@ -201,3 +204,4 @@ layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, showWorkspace, pen
 - **锁定与自动两态**：自动匹配总有猜错的时候，所以保留一个“用户说了算”的出口，并且状态要可见。
 - **确认可选**：默认开启是因为误投代价高；但锁定后不再确认，避免每次都要两次回车。
 - **匹配只用检索+标题+目录**：不引入本地模型做裁判——成本高、延迟大，收益在“两个候选分不清”时才出现。
+- **检索先拆词**：宿主检索是字面短语匹配，整句等于零命中；实时预览抽 4 个词、确认时抽 10 个词，是延迟与召回之间的折中。
