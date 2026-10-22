@@ -1,5 +1,7 @@
 # dsh-session-overview
 
+[![test](https://github.com/airplanebig/dsh-session-overview/actions/workflows/test.yml/badge.svg)](https://github.com/airplanebig/dsh-session-overview/actions/workflows/test.yml)
+
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）加一个**总窗口**：在一个页面里看遍所有工作区的会话，输入一句话，自动匹配最可能的目标会话，确认后把需求投递进去。
 
 > 会话按工作区分开，是为了前缀缓存和上下文隔离；但“这次该去哪个会话”不该由用户记。这个插件补的就是那一层。
@@ -13,7 +15,7 @@
 - **跨工作区总览**：工作区是面板，会话是格子，按最近活动排序，点一格跳过去。
 - **自动匹配**：输入时用会话全文检索 + 标题/目录二元组匹配打分，自动把目标切到最可能的会话，并写明依据。
 - **手动锁定**：`▾` 里选一次就锁定，之后输入再多也不改目标；选「自动匹配」解锁。
-- **最近使用**：输入框上方一排最近 6 个会话，点一下即锁定。
+- **最近使用**：输入框上方一排最近 6 个会话，点一下即锁定；无标题会话会带工作区后缀（`(未命名会话) · 杀`），不会几个条目长得一样。
 - **发送前确认**（默认开）：非锁定状态下第一次回车只提示「将投递到 `<会话>`」，再回车才发，`Esc` 取消。
 - **主题自适应**：全部走 DSH 设计令牌，深色/浅色都不需要额外配置。
 
@@ -144,7 +146,7 @@ color: var(--dsw-alias-label-primary-foreground);
 ## 开发
 
 ```bash
-node test/selftest.cjs       # 50 项离线校验，不需要 DSH、不需要浏览器
+node test/selftest.cjs       # 51 项离线校验，不需要 DSH、不需要浏览器
 ```
 
 自测用假的模块加载器 + 假 React + 假会话 API，把 `lib/client.js` 真正加载、注册、渲染并驱动一遍。

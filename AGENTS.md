@@ -7,7 +7,7 @@
 ## 五分钟上手
 
 ```bash
-node test/selftest.cjs     # 50 项离线校验，不依赖 DSH / 浏览器
+node test/selftest.cjs     # 51 项离线校验，不依赖 DSH / 浏览器
 ```
 
 改完代码后：插件在 profile 里是 `link:` 依赖，**重启 DSH 即可**，不需要重装、不需要 pnpm install。

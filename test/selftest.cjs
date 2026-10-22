@@ -70,17 +70,21 @@ async function main() {
       'session-a': { id: 'session-a', title: '做一个 C# 控制台项目', updatedAt: now - 60000, cwd: 'D:\\VSProject\\记忆' },
       'session-b': { id: 'session-b', title: 'Unity 穿墙修复', updatedAt: now - 7200000, cwd: 'D:\\UnityProject\\杀' },
       'session-c': { id: 'session-c', title: '大肥鱼插画', updatedAt: now - 300000, cwd: 'D:\\VSProject\\记忆' },
+      'session-d': { id: 'session-d', updatedAt: now - 1000000, cwd: 'D:\\UnityProject\\杀' },
     },
   };
   sessions.list = { getSnapshot: () => sessions, subscribe: () => () => {} };
 
+  const workspaceRows = [
+    { workspaceId: 'w1', cwd: 'D:\\VSProject\\记忆', sessionIds: ['session-a', 'session-c'] },
+    { workspaceId: 'w2', cwd: 'D:\\UnityProject\\杀', sessionIds: ['session-b', 'session-d'] },
+  ];
   const workspaces = {
-    list: [
-      { workspaceId: 'w1', cwd: 'D:\\VSProject\\记忆', sessionIds: ['session-a', 'session-c'] },
-      { workspaceId: 'w2', cwd: 'D:\\UnityProject\\杀', sessionIds: ['session-b'] },
-    ],
+    list: {
+      getSnapshot: () => ({ list: workspaceRows }),
+      subscribe: () => () => {},
+    },
   };
-  workspaces.list = { getSnapshot: () => workspaces, subscribe: () => () => {} };
 
   const prompts = [];
   sessions.using = async (id, options, operation) => {
@@ -183,7 +187,7 @@ async function main() {
 
   // ---- pure ranking helpers ----
   const rows = [
-    sessions.byId['session-a'], sessions.byId['session-b'], sessions.byId['session-c'],
+    sessions.byId['session-a'], sessions.byId['session-b'], sessions.byId['session-c'], sessions.byId['session-d'],
   ];
   const contentRanked = mod.__test.rankCandidates('构建为什么失败', rows, [{ id: 'session-b' }]);
   checks.push(['content hit ranks first', contentRanked[0].id === 'session-b' && contentRanked[0].reason === 'content']);
@@ -268,9 +272,11 @@ async function main() {
   tree = render();
   const recentChips = findAll(tree, (n) => n.type === 'button' && n.props && n.props['data-recent']);
   checks.push(['recent row labels itself', flatText(tree).includes('最近使用')]);
-  checks.push(['recent row lists the newest sessions', recentChips.length === 3]);
+  checks.push(['recent row lists the newest sessions', recentChips.length === 4]);
   checks.push(['recent chips are ordered by recency',
-    recentChips.map((n) => n.props['data-recent']).join(',') === 'session-a,session-c,session-b']);
+    recentChips.map((n) => n.props['data-recent']).join(',') === 'session-a,session-c,session-d,session-b']);
+  checks.push(['untitled session shows its workspace',
+    flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('未命名会话) · 杀')]);
   recentChips.find((n) => n.props['data-recent'] === 'session-b').props.onClick();
   tree = render();
   checks.push(['recent chip pins that session', flatText(tree).includes('已锁定 · Unity 穿墙修复')]);
@@ -298,7 +304,7 @@ async function main() {
   findAll(tree, (n) => n.type === 'button' && flatText(n.children).includes('▾'))[0].props.onClick();
   tree = render();
   const options = findAll(tree, (n) => n.props && n.props.role === 'option');
-  checks.push(['picker offers auto plus every session', options.length === 4 && flatText(options[0]) === '自动匹配']);
+  checks.push(['picker offers auto plus every session', options.length === 5 && flatText(options[0]) === '自动匹配']);
   options.find((o) => flatText(o.children).includes('大肥鱼插画')).props.onClick();
   tree = render();
   checks.push(['picker pins the chosen session', flatText(tree).includes('已锁定 · 大肥鱼插画')]);
