@@ -42,5 +42,13 @@
   "scripts": {
     "test": "node test/selftest.cjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/airplanebig/dsh-session-overview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/airplanebig/dsh-session-overview/issues"
+  },
+  "homepage": "https://github.com/airplanebig/dsh-session-overview#readme",
   "license": "MIT"
 }
