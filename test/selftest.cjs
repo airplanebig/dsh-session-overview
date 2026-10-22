@@ -81,7 +81,8 @@ async function main() {
   ];
   const workspaces = {
     list: {
-      getSnapshot: () => ({ list: workspaceRows }),
+      // the live snapshot is a plain array — keep the fixture identical to reality
+      getSnapshot: () => workspaceRows,
       subscribe: () => () => {},
     },
   };
