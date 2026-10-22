@@ -9,7 +9,7 @@
 ## 五分钟上手
 
 ```bash
-node test/selftest.cjs     # 66 项离线校验，不依赖 DSH / 浏览器
+node test/selftest.cjs     # 70 项离线校验，不依赖 DSH / 浏览器
 ```
 
 改完代码后：插件在 profile 里是 `link:` 依赖，**重启 DSH 即可**，不需要重装、不需要 pnpm install。
@@ -120,6 +120,8 @@ state-warn-primary / state-error-primary
 | `workspaceOf` | 取工作区名；注册表里没有该会话时退回它自己的 `cwd` 末段 |
 | `normalize` / `bigrams` / `overlapScore` | 中文友好的二元组匹配 |
 | `extractKeywords` | 把整句拆成可检索的词（ASCII 优先 + 中文二元组）；`LIVE_QUERY_LIMIT=4`、`CONFIRM_QUERY_LIMIT=10` |
+| `splitClauses` | 按标点切从句；标题/目录打分取**最佳从句**，句末附加说明不会稀释分数 |
+| `searchTerms`（组件内） | 逐词检索并合并命中；遇到 `ok:false` 置 `searchOff` 并提示 |
 | `rankCandidates` / `pickBest` | 打分与阈值（0.35 / 0.05） |
 | `reasonText` | 把 reason 翻成人话 |
 | `readLayout` / `saveLayout` / `readAsk` / `saveAsk` / `readShowWorkspace` / `saveShowWorkspace` | 偏好持久化 |
@@ -153,7 +155,7 @@ layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, showWorkspace, pen
 ## 改功能的检查清单
 
 - 加 UI 元素：用 `styles.*` 与令牌；新增文案同时加 `zh`/`en`。
-- 改匹配：只改 `rankCandidates` / `pickBest`，并在 `test/selftest.cjs` 的纯函数区加断言。
+- 改匹配：只改 `rankCandidates` / `pickBest` / `splitClauses`，并在 `test/selftest.cjs` 的纯函数区加断言。标题与目录打分必须走**最佳从句**，否则用户补一句括号说明就会让匹配失效。
 - 改发送：保持 `deliver()` 的单一路径，确认流程不要绕过它。
 - 加持久化：新 key 用 `dsh-session-overview:<name>`，读取要有 try/catch 与默认值。
 - 改标签：workspace 与 title 必须**上下分层渲染**（`labelParts` + `styles.stackColumn`），不要拼成一串；工作区名优先取注册表，缺失时退回 `workspaceOf` 的 `cwd` 末段；同名工作区由 `buildWorkspaceLabels` 用父目录区分。

@@ -1,6 +1,6 @@
 {
   "name": "dsh-session-overview",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "DeepSeek Harness 插件：跨工作区会话总览、自动匹配目标会话、确认后投递（总窗口 Phase 1–3）",
   "type": "module",
   "main": "lib/index.js",

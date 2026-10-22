@@ -106,8 +106,12 @@ async function main() {
   };
 
   const searchQueries = [];
+  let searchDisabled = false;
   sessions.search = async (query) => {
     searchQueries.push(query);
+    if (searchDisabled) {
+      return { ok: false, error: { code: 'SESSION_QUERY_SEARCH_DISABLED', message: 'search disabled' } };
+    }
     let items = [];
     if (query.includes('鱼')) items = [{ id: 'session-c', snippet: '画了一只大肥鱼' }];
     else if (query === 'Bow' || query === '背包') items = [{ id: 'session-b', snippet: 'Bow 需要从背包取 arrow' }];
@@ -216,6 +220,12 @@ async function main() {
   checks.push(['keywords are deduped and capped',
     new Set(keywords.map((k) => k.toLowerCase())).size === keywords.length && keywords.length <= 10]);
 
+  // a trailing aside must not break an otherwise strong match
+  const withAside = mod.__test.rankCandidates('画一条大肥鱼，要很胖（可以考虑加个泡泡）', rows, []);
+  checks.push(['a trailing parenthetical still matches', mod.__test.pickBest(withAside)?.id === 'session-c']);
+  checks.push(['clauses split on punctuation',
+    mod.__test.splitClauses('实现bow类，攻速同sword（补充说明）').length === 3]);
+
   // ---- page basics ----
   let tree = render();
   checks.push(['page lists every session', ['做一个 C# 控制台项目', 'Unity 穿墙修复', '大肥鱼插画'].every((s) => asText(tree).includes(s))]);
@@ -303,6 +313,24 @@ async function main() {
   await wait(0);
   tree = render();
   checks.push(['long sentence sends to the keyword match', prompts.length === 3 && prompts[2].id === 'session-b']);
+
+  // ---- when the host has no content index, say so instead of pretending ----
+  searchDisabled = true;
+  type('背包里还有什么');
+  await wait(350);
+  tree = render();
+  checks.push(['disabled content search is surfaced', flatText(tree).includes('宿主未启用内容检索')]);
+  searchDisabled = false;
+
+  // ---- picker filter narrows the list ----
+  findAll(tree, (n) => n.type === 'button' && flatText(n.children).includes('▾'))[0].props.onClick();
+  tree = render();
+  const filterInput = findAll(tree, (n) => n.type === 'input' && n.props.placeholder === '过滤会话名…')[0];
+  filterInput.props.onChange({ target: { value: '肥鱼' } });
+  tree = render();
+  checks.push(['filter narrows the picker', findAll(tree, (n) => n.props && n.props.role === 'option').length === 2]);
+  filterInput.props.onChange({ target: { value: '' } });
+  tree = render();
 
   // ---- manual lock skips the question ----
   tree = render();

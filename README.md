@@ -87,6 +87,10 @@ dsh plugin --profile web add link:/path/to/dsh-session-overview
 
 同一会话被多个关键词命中会额外加分——`Bow` 和 `背包` 都命中同一个会话，比只命中一个更可信。
 
+**标题与目录按从句打分**：在句末补一句「（可以考虑将攻速处理迁移至weapon）」这类说明，不会拉低主句的匹配度——分数取各从句里的最高值，附加说明只是多了一个候选从句。
+
+> 宿主的内容检索默认关闭（`openAt: never`），且 FTS5 的 `unicode61` 分词把连续的中英混排视为**一个 token**，所以「背包」这类中文片段即使索引了也匹配不到。插件在检索不可用时会直接在输入区下方提示，并给下拉列表加了过滤框用于手选。
+
 ### 状态徽标
 
 | 状态 | 显示 | 颜色 |
@@ -177,7 +181,7 @@ color: var(--dsw-alias-label-primary-foreground);
 ## 开发
 
 ```bash
-node test/selftest.cjs       # 66 项离线校验，不需要 DSH、不需要浏览器
+node test/selftest.cjs       # 70 项离线校验，不需要 DSH、不需要浏览器
 ```
 
 自测用假的模块加载器 + 假 React + 假会话 API，把 `lib/client.js` 真正加载、注册、渲染并驱动一遍。
