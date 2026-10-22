@@ -77,7 +77,8 @@ async function main() {
 
   const workspaceRows = [
     { workspaceId: 'w1', cwd: 'D:\\VSProject\\记忆', sessionIds: ['session-a', 'session-c'] },
-    { workspaceId: 'w2', cwd: 'D:\\UnityProject\\杀', sessionIds: ['session-b', 'session-d'] },
+    // session-b is deliberately absent from the registry so its label must fall back to cwd
+    { workspaceId: 'w2', cwd: 'D:\\UnityProject\\杀', sessionIds: ['session-d'] },
   ];
   const workspaces = {
     list: {
@@ -288,12 +289,17 @@ async function main() {
     recentChips.map((n) => n.props['data-recent']).join(',') === 'session-a,session-c,session-d,session-b']);
   checks.push(['untitled chip carries a workspace tag',
     flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')]);
+  checks.push(['chip stacks workspace above the title',
+    findAll(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0], (n) => n.type === 'span').length === 2]);
+  checks.push(['workspace falls back to the session cwd',
+    flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-b')[0]).includes('杀')]);
 
   // the workspace tag is optional
   checkboxes()[1].props.onChange({ target: { checked: false } });
   tree = render();
   checks.push(['hiding workspaces removes the tag',
-    !flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')]);
+    !flatText(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0]).includes('杀')
+    && findAll(findAll(tree, (n) => n.props && n.props['data-recent'] === 'session-d')[0], (n) => n.type === 'span').length === 0]);
   checks.push(['workspace choice is persisted', storage.get('dsh-session-overview:workspace') === '0']);
   checkboxes()[1].props.onChange({ target: { checked: true } });
   tree = render();

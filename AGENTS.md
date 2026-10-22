@@ -9,7 +9,7 @@
 ## 五分钟上手
 
 ```bash
-node test/selftest.cjs     # 57 项离线校验，不依赖 DSH / 浏览器
+node test/selftest.cjs     # 59 项离线校验，不依赖 DSH / 浏览器
 ```
 
 改完代码后：插件在 profile 里是 `link:` 依赖，**重启 DSH 即可**，不需要重装、不需要 pnpm install。
@@ -116,11 +116,12 @@ state-warn-primary / state-error-primary
 | `useStore` | uSES 订阅 |
 | `baseName` / `parentName` / `ago` / `clampInt` | 小工具 |
 | `buildWorkspaceLabels` | 会话 id → 工作区标签；同名工作区用父目录区分（`A/记忆`、`B/记忆`） |
+| `workspaceOf` | 取工作区名；注册表里没有该会话时退回它自己的 `cwd` 末段 |
 | `normalize` / `bigrams` / `overlapScore` | 中文友好的二元组匹配 |
 | `rankCandidates` / `pickBest` | 打分与阈值（0.35 / 0.05） |
 | `reasonText` | 把 reason 翻成人话 |
 | `readLayout` / `saveLayout` / `readAsk` / `saveAsk` / `readShowWorkspace` / `saveShowWorkspace` | 偏好持久化 |
-| `labelParts` | 把标签拆成 `{ workspace, title }` 两段，避免拼成一长串 |
+| `labelParts` | 把标签拆成 `{ workspace, title }` 两段，渲染时**上下分层**，不要拼成一行 |
 | `OverviewIcon` | 侧边栏图标（两个实心方块，18px 可读） |
 | `Segmented` | 自绘分段控件（替代原生 select） |
 | `WorkspaceCard` | 工作区面板 + 会话格子 |
@@ -152,7 +153,7 @@ layout, draft, pinnedId, auto, pickerOpen, busy, status, ask, showWorkspace, pen
 - 改匹配：只改 `rankCandidates` / `pickBest`，并在 `test/selftest.cjs` 的纯函数区加断言。
 - 改发送：保持 `deliver()` 的单一路径，确认流程不要绕过它。
 - 加持久化：新 key 用 `dsh-session-overview:<name>`，读取要有 try/catch 与默认值。
-- 改标签：workspace 与 title 必须**分开渲染**（`labelParts`），不要拼成一串——拼接会吃掉会话名的可见宽度；同名工作区由 `buildWorkspaceLabels` 用父目录区分。
+- 改标签：workspace 与 title 必须**上下分层渲染**（`labelParts` + `styles.stackColumn`），不要拼成一串；工作区名优先取注册表，缺失时退回 `workspaceOf` 的 `cwd` 末段；同名工作区由 `buildWorkspaceLabels` 用父目录区分。
 - 改注册形状：同步 `package.json` / `cordis.patch.yml` / 测试断言。
 - 改完必须跑 `node test/selftest.cjs`，全部 PASS 再交付。
 
