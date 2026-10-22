@@ -226,6 +226,19 @@ async function main() {
   checks.push(['clauses split on punctuation',
     mod.__test.splitClauses('实现bow类，攻速同sword（补充说明）').length === 3]);
 
+  // content hits are weighted by how much the term proves
+  checks.push(['identifiers weigh more than common bigrams',
+    mod.__test.termSpecificity('bow') === 1 && mod.__test.termSpecificity('实现') === 0]);
+  const weighted = mod.__test.rankCandidates(
+    '实现bow类，bow所需要的arrow在背包检索',
+    rows,
+    [
+      { term: '实现', items: [{ id: 'session-b', snippet: '实现 Move 中逐渐抬高' }] },
+      { term: 'bow', items: [{ id: 'session-c', snippet: 'bow 需要 arrow' }] },
+    ]
+  );
+  checks.push(['a common-word hit cannot win on its own', weighted[0].id === 'session-c']);
+
   // ---- page basics ----
   let tree = render();
   checks.push(['page lists every session', ['做一个 C# 控制台项目', 'Unity 穿墙修复', '大肥鱼插画'].every((s) => asText(tree).includes(s))]);
